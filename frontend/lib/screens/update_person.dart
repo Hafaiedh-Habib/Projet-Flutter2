@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../models/person.dart';
 
@@ -72,6 +73,9 @@ class _ModifierContactPageState extends State<ModifierContactPage> {
     });
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id') ?? '';
+      
       await ApiService.updatePerson(
         contactId,
         Person(
@@ -79,6 +83,7 @@ class _ModifierContactPageState extends State<ModifierContactPage> {
           nom: nomCtrl.text.trim(),
           prenom: prenomCtrl.text.trim(),
           telephone: numeroCtrl.text.trim(),
+          userID: userId,
         ),
       );
 

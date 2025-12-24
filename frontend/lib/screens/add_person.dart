@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/person.dart';
 import '../services/api_service.dart';
 
@@ -25,10 +26,14 @@ class _AddPersonScreenState extends State<AddPersonScreen> {
     });
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id') ?? '';
+      
       final person = Person(
         nom: _nomController.text,
         prenom: _prenomController.text,
         telephone: _telephoneController.text,
+        userID: userId,
       );
 
       await ApiService.addPerson(person);
