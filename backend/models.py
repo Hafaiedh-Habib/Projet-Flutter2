@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from database import Base
 from pydantic import BaseModel
 
@@ -8,13 +8,15 @@ class Person(Base):
     id = Column(Integer, primary_key=True, index=True)
     nom = Column(String, index=True)
     prenom = Column(String, index=True)
-    telephone = Column(String, unique=True, index=True)
+    telephone = Column(String, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 
 
 class PersonCreate(BaseModel):
     nom: str
     prenom: str
     telephone: str
+    user_id: int
 
 
 class PersonResponse(BaseModel):
@@ -22,6 +24,7 @@ class PersonResponse(BaseModel):
     nom: str
     prenom: str
     telephone: str
+    user_id: int
     
     class Config:
         from_attributes = True

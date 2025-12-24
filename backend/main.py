@@ -29,45 +29,57 @@ app.add_middleware(
 
 @app.post("/personnes", response_model=PersonResponse)
 def create_person(person: PersonCreate, db: Session = Depends(get_db)):
-    db_person = db.query(Person).filter(Person.telephone == person.telephone).first()
+    # Check if phone number exists for this user
+    db_person = db.query(Person).filter(
+        Person.telephone == person.telephone,
+        Person.user_id == person.user_id
+    ).first()
     if db_person:
-        raise HTTPException(status_code=400, detail="Ce numéro de téléphone existe déjà")
+        raise HTTPException(status_code=400, detail="Ce numéro de téléphone existe déjà dans vos contacts")
     
     db_person = Person(
         nom=person.nom,
         prenom=person.prenom,
-        telephone=person.telephone
+        telephone=person.telephone,
+        user_id=person.user_id
     )
     db.add(db_person)
     db.commit()
     db.refresh(db_person)
     return db_person
 
-@app.get("/personnes", response_model=List[PersonResponse])
-def get_persons(db: Session = Depends(get_db)):
-    persons = db.query(Person).all()
+@app.get("/personnes/{user_id}", response_model=List[PersonResponse])
+def get_persons(user_id: int, db: Session = Depends(get_db)):
+    persons = db.query(Person).filter(Person.user_id == user_id).all()
     return persons
 
-@app.get("/personnes/search/{query}", response_model=List[PersonResponse])
-def search_persons(query: str, db: Session = Depends(get_db)):
+@app.get("/personnes/search/{user_id}/{query}", response_model=List[PersonResponse])
+def search_persons(user_id: int, query: str, db: Session = Depends(get_db)):
     query_lower = query.lower()
     persons = db.query(Person).filter(
+        Person.user_id == user_id,
         (Person.nom.ilike(f"%{query_lower}%")) |
         (Person.prenom.ilike(f"%{query_lower}%")) |
         (Person.telephone.ilike(f"%{query_lower}%"))
     ).all()
     return persons
 
-@app.get("/personnes/{person_id}", response_model=PersonResponse)
-def get_person(person_id: int, db: Session = Depends(get_db)):
-    person = db.query(Person).filter(Person.id == person_id).first()
+@app.get("/personnes/detail/{user_id}/{person_id}", response_model=PersonResponse)
+def get_person(user_id: int, person_id: int, db: Session = Depends(get_db)):
+    person = db.query(Person).filter(
+        Person.id == person_id,
+        Person.user_id == user_id
+    ).first()
     if person is None:
         raise HTTPException(status_code=404, detail="Personne non trouvée")
     return person
 
-@app.delete("/personnes/{person_id}")
-def delete_person(person_id: int, db: Session = Depends(get_db)):
-    person = db.query(Person).filter(Person.id == person_id).first()
+@app.delete("/personnes/{user_id}/{person_id}")
+def delete_person(user_id: int, person_id: int, db: Session = Depends(get_db)):
+    person = db.query(Person).filter(
+        Person.id == person_id,
+        Person.user_id == user_id
+    ).first()
     if person is None:
         raise HTTPException(status_code=404, detail="Personne non trouvée")
     
@@ -75,19 +87,23 @@ def delete_person(person_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Personne supprimée avec succès"}
 
-@app.put("/personnes/{person_id}", response_model=PersonResponse)
-def update_person(person_id: int, person: PersonCreate, db: Session = Depends(get_db)):
-    db_person = db.query(Person).filter(Person.id == person_id).first()
+@app.put("/personnes/{user_id}/{person_id}", response_model=PersonResponse)
+def update_person(user_id: int, person_id: int, person: PersonCreate, db: Session = Depends(get_db)):
+    db_person = db.query(Person).filter(
+        Person.id == person_id,
+        Person.user_id == user_id
+    ).first()
     if db_person is None:
         raise HTTPException(status_code=404, detail="Personne non trouvée")
     
-    # Vérifier si le nouveau numéro existe déjà pour une autre personne
+    # Vérifier si le nouveau numéro existe déjà pour une autre personne de cet utilisateur
     existing = db.query(Person).filter(
         Person.telephone == person.telephone,
+        Person.user_id == user_id,
         Person.id != person_id
     ).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Ce numéro de téléphone existe déjà")
+        raise HTTPException(status_code=400, detail="Ce numéro de téléphone existe déjà dans vos contacts")
     
     db_person.nom = person.nom
     db_person.prenom = person.prenom

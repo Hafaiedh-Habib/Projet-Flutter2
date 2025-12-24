@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../models/person.dart';
 
 class ModifierContactPage extends StatefulWidget {
@@ -12,6 +13,7 @@ class _ModifierContactPageState extends State<ModifierContactPage> {
   final prenomCtrl = TextEditingController();
   final numeroCtrl = TextEditingController();
   late int contactId;
+  int? currentUserId;
   bool isLoading = true;
   bool isSaving = false;
 
@@ -20,13 +22,25 @@ class _ModifierContactPageState extends State<ModifierContactPage> {
     super.didChangeDependencies();
     if (isLoading) {
       contactId = ModalRoute.of(context)!.settings.arguments as int;
+      _initializeAndLoad();
+    }
+  }
+
+  Future<void> _initializeAndLoad() async {
+    final user = await AuthService.getCurrentUser();
+    if (user != null) {
+      setState(() {
+        currentUserId = user.id;
+      });
       _loadContact();
     }
   }
 
   Future<void> _loadContact() async {
+    if (currentUserId == null) return;
+    
     try {
-      Person person = await ApiService.getPerson(contactId);
+      Person person = await ApiService.getPerson(currentUserId!, contactId);
       nomCtrl.text = person.nom;
       prenomCtrl.text = person.prenom;
       numeroCtrl.text = person.telephone;
@@ -67,18 +81,31 @@ class _ModifierContactPageState extends State<ModifierContactPage> {
       return;
     }
 
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erreur: utilisateur non connecté"),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       isSaving = true;
     });
 
     try {
       await ApiService.updatePerson(
+        currentUserId!,
         contactId,
         Person(
           id: contactId,
           nom: nomCtrl.text.trim(),
           prenom: prenomCtrl.text.trim(),
           telephone: numeroCtrl.text.trim(),
+          userId: currentUserId!,
         ),
       );
 

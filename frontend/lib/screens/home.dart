@@ -14,11 +14,25 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = true;
   TextEditingController searchController = TextEditingController();
   String searchQuery = '';
+  int? currentUserId;
 
   @override
   void initState() {
     super.initState();
-    _loadPersons();
+    _initializeUser();
+  }
+
+  Future<void> _initializeUser() async {
+    final user = await AuthService.getCurrentUser();
+    if (user != null) {
+      setState(() {
+        currentUserId = user.id;
+      });
+      _loadPersons();
+    } else {
+      // No user logged in, redirect to login
+      Navigator.pushReplacementNamed(context, '/connexion');
+    }
   }
 
   @override
@@ -28,6 +42,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadPersons() async {
+    if (currentUserId == null) return;
+    
     setState(() {
       isLoading = true;
     });
@@ -35,9 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       List<Person> loadedPersons;
       if (searchQuery.isEmpty) {
-        loadedPersons = await ApiService.getPersons();
+        loadedPersons = await ApiService.getPersons(currentUserId!);
       } else {
-        loadedPersons = await ApiService.searchPersons(searchQuery);
+        loadedPersons = await ApiService.searchPersons(currentUserId!, searchQuery);
       }
       
       setState(() {
@@ -60,8 +76,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _deletePerson(int id) async {
+    if (currentUserId == null) return;
+    
     try {
-      await ApiService.deletePerson(id);
+      await ApiService.deletePerson(currentUserId!, id);
       _loadPersons();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Contact supprimé avec succès')),

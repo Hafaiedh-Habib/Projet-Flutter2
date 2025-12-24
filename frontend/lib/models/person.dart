@@ -3,12 +3,14 @@ class Person {
   final String nom;
   final String prenom;
   final String telephone;
+  final int userId;
 
   Person({
     this.id,
     required this.nom,
     required this.prenom,
     required this.telephone,
+    required this.userId,
   });
 
   factory Person.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class Person {
       nom: json['nom'],
       prenom: json['prenom'],
       telephone: json['telephone'],
+      userId: json['user_id'],
     );
   }
   
@@ -26,6 +29,7 @@ class Person {
       'nom': nom,
       'prenom': prenom,
       'telephone': telephone,
+      'user_id': userId,
     };
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/person.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 
 class AddPersonScreen extends StatefulWidget {
   @override
@@ -14,9 +15,30 @@ class _AddPersonScreenState extends State<AddPersonScreen> {
   final _telephoneController = TextEditingController();
 
   bool _isLoading = false;
+  int? currentUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final user = await AuthService.getCurrentUser();
+    if (user != null) {
+      setState(() {
+        currentUserId = user.id;
+      });
+    }
+  }
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (currentUserId == null) {
+      _showErrorDialog('Erreur: utilisateur non connecté');
       return;
     }
 
@@ -29,6 +51,7 @@ class _AddPersonScreenState extends State<AddPersonScreen> {
         nom: _nomController.text,
         prenom: _prenomController.text,
         telephone: _telephoneController.text,
+        userId: currentUserId!,
       );
 
       await ApiService.addPerson(person);

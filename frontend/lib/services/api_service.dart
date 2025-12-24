@@ -52,8 +52,8 @@ class ApiService {
   // ============= Person Methods =============
 
   // Récupérer toutes les personnes
-  static Future<List<Person>> getPersons() async {
-    final response = await http.get(Uri.parse('$baseUrl/personnes'));
+  static Future<List<Person>> getPersons(int userId) async {
+    final response = await http.get(Uri.parse('$baseUrl/personnes/$userId'));
     
     if (response.statusCode == 200) {
       List<dynamic> body = jsonDecode(response.body);
@@ -64,8 +64,8 @@ class ApiService {
   }
 
   // Rechercher des personnes
-  static Future<List<Person>> searchPersons(String query) async {
-    final response = await http.get(Uri.parse('$baseUrl/personnes/search/$query'));
+  static Future<List<Person>> searchPersons(int userId, String query) async {
+    final response = await http.get(Uri.parse('$baseUrl/personnes/search/$userId/$query'));
     
     if (response.statusCode == 200) {
       List<dynamic> body = jsonDecode(response.body);
@@ -78,8 +78,8 @@ class ApiService {
 
 
   // Récupérer une personne par ID
-  static Future<Person> getPerson(int id) async {
-    final response = await http.get(Uri.parse('$baseUrl/personnes/$id'));
+  static Future<Person> getPerson(int userId, int id) async {
+    final response = await http.get(Uri.parse('$baseUrl/personnes/detail/$userId/$id'));
     
     if (response.statusCode == 200) {
       return Person.fromJson(jsonDecode(response.body));
@@ -107,9 +107,9 @@ class ApiService {
 
 
   // Mettre à jour une personne
-  static Future<Person> updatePerson(int id, Person person) async {
+  static Future<Person> updatePerson(int userId, int id, Person person) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/personnes/$id'),
+      Uri.parse('$baseUrl/personnes/$userId/$id'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(person.toJson()),
     );
@@ -125,8 +125,8 @@ class ApiService {
 
 
   // Supprimer une personne
-  static Future<void> deletePerson(int id) async {
-    final response = await http.delete(Uri.parse('$baseUrl/personnes/$id'));
+  static Future<void> deletePerson(int userId, int id) async {
+    final response = await http.delete(Uri.parse('$baseUrl/personnes/$userId/$id'));
     
     if (response.statusCode != 200) {
       throw Exception('Erreur lors de la suppression de la personne');
