@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/person.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import 'add_person.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -114,9 +114,28 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.logout),
             tooltip: 'Déconnexion',
             onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.remove('user_id');
-              Navigator.pushReplacementNamed(context, '/connexion');
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: Text('Déconnexion'),
+                  content: Text('Voulez-vous vraiment vous déconnecter?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: Text('Annuler'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: Text('Déconnexion', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+              
+              if (confirmed == true) {
+                await AuthService.logout();
+                Navigator.pushReplacementNamed(context, '/connexion');
+              }
             },
           ),
         ],

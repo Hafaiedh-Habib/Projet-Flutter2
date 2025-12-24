@@ -1,10 +1,55 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/person.dart';
+import '../models/user.dart';
 
 class ApiService {
   // Use 10.0.2.2 for Android emulator to access host machine
   static const String baseUrl = 'http://10.0.2.2:8000';
+
+  // ============= Authentication Methods =============
+  
+  // Register a new user
+  static Future<User> register(String nom, String prenom, String numero, String motDePasse) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/register'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'nom': nom,
+        'prenom': prenom,
+        'numero': numero,
+        'mot_de_passe': motDePasse,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return User.fromJson(jsonDecode(response.body));
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Erreur lors de l\'inscription');
+    }
+  }
+
+  // Login user
+  static Future<User> login(String numero, String motDePasse) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'numero': numero,
+        'mot_de_passe': motDePasse,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return User.fromJson(jsonDecode(response.body));
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Erreur de connexion');
+    }
+  }
+
+  // ============= Person Methods =============
 
   // Récupérer toutes les personnes
   static Future<List<Person>> getPersons() async {

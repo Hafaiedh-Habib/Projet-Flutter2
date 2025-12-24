@@ -2,8 +2,18 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
+from passlib.context import CryptContext
 from database import engine, get_db
 from models import Base, Person, PersonCreate, PersonResponse, User, UserCreate, UserLogin, UserResponse
+
+# Password hashing context
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
 
 Base.metadata.create_all(bind=engine)
 
@@ -32,7 +42,6 @@ def create_person(person: PersonCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_person)
     return db_person
-
 
 @app.get("/personnes", response_model=List[PersonResponse])
 def get_persons(db: Session = Depends(get_db)):
@@ -89,18 +98,21 @@ def update_person(person_id: int, person: PersonCreate, db: Session = Depends(ge
     return db_person
 
 
-
+#######################""#####""
 @app.post("/auth/register", response_model=UserResponse)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.numero == user.numero).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Ce numéro existe déjà")
     
+    # Hash the password before storing
+    hashed_password = hash_password(user.mot_de_passe)
+    
     db_user = User(
         nom=user.nom.lower(),
         prenom=user.prenom.lower(),
         numero=user.numero,
-        mot_de_passe=user.mot_de_passe
+        mot_de_passe=hashed_password
     )
     db.add(db_user)
     db.commit()
@@ -109,12 +121,13 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 
 @app.post("/auth/login", response_model=UserResponse)
 def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(
-        User.numero == credentials.numero,
-        User.mot_de_passe == credentials.mot_de_passe
-    ).first()
+    user = db.query(User).filter(User.numero == credentials.numero).first()
     
     if user is None:
+        raise HTTPException(status_code=401, detail="Numéro ou mot de passe incorrect")
+    
+    # Verify password using hash
+    if not verify_password(credentials.mot_de_passe, user.mot_de_passe):
         raise HTTPException(status_code=401, detail="Numéro ou mot de passe incorrect")
     
     return user

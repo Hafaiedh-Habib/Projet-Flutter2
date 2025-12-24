@@ -3,16 +3,14 @@ class User {
   final String nom;
   final String prenom;
   final String numero;
-  final String motDePasse;
-  final String userID ;
+  final String? motDePasse; // Optional for login responses
 
   User({
     this.id,
     required this.nom,
     required this.prenom,
     required this.numero,
-    required this.motDePasse,
-    required this.userID
+    this.motDePasse,
   });
 
   factory User.fromJson(Map<String, dynamic> map) {
@@ -22,18 +20,24 @@ class User {
       prenom: map['prenom'],
       numero: map['numero'],
       motDePasse: map['mot_de_passe'],
-      userID: map['userID'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'nom': nom,
+      'prenom': prenom,
+      'numero': numero,
+      if (motDePasse != null) 'mot_de_passe': motDePasse,
+    };
+  }
+
+  Map<String, dynamic> toJsonWithId() {
+    return {
       'id': id,
       'nom': nom,
       'prenom': prenom,
       'numero': numero,
-      'mot_de_passe': motDePasse,
-      'userID': userID
     };
   }
 }
