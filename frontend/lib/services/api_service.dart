@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/person.dart';
 import '../models/user.dart';
 
 class ApiService {
-  // Use 10.0.2.2 for Android emulator to access host machine
-  static const String baseUrl = 'http://10.0.2.2:8000';
+  // Use localhost for web, 10.0.2.2 for Android emulator
+  static String get baseUrl => kIsWeb ? 'http://localhost:8000' : 'http://10.0.2.2:8000';
 
   // ============= Authentication Methods =============
   
