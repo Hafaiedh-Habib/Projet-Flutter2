@@ -4,6 +4,7 @@ class User {
   final String prenom;
   final String numero;
   final String motDePasse;
+  final String userID ;
 
   User({
     this.id,
@@ -11,6 +12,7 @@ class User {
     required this.prenom,
     required this.numero,
     required this.motDePasse,
+    required this.userID
   });
 
   factory User.fromJson(Map<String, dynamic> map) {
@@ -20,6 +22,7 @@ class User {
       prenom: map['prenom'],
       numero: map['numero'],
       motDePasse: map['mot_de_passe'],
+      userID: map['userID'],
     );
   }
 
@@ -30,6 +33,9 @@ class User {
       'prenom': prenom,
       'numero': numero,
       'mot_de_passe': motDePasse,
+      'userID': userID
     };
   }
 }
+
+
