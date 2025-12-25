@@ -38,7 +38,12 @@ class User {
       'nom': nom,
       'prenom': prenom,
       'numero': numero,
+<<<<<<< HEAD
     };
+=======
+      'mot_de_passe': motDePasse
+      };
+>>>>>>> 2f047c9461103b86b359469ea2a001eab7f624b9
   }
 }
 
